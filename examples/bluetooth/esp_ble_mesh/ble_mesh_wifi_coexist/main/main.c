@@ -767,15 +767,19 @@ static void wifi_console_init(void)
     /* Register commands */
     register_wifi();
 
-    printf("\n ==================================================\n");
-    printf(" |       Steps to test WiFi throughput            |\n");
-    printf(" |                                                |\n");
-    printf(" |  1. Print 'help' to gain overview of commands  |\n");
-    printf(" |  2. Configure device to station or soft-AP     |\n");
-    printf(" |  3. Setup WiFi connection                      |\n");
-    printf(" |  4. Run iperf to test UDP/TCP RX/TX throughput |\n");
-    printf(" |                                                |\n");
-    printf(" =================================================\n\n");
+    printf("\n ========================================================\n");
+    printf(" |       Steps to use this test program                   |\n");
+    printf(" |                                                        |\n");
+    printf(" |  1. Setup a Wifi Router with testSSID/testPassword     |\n");
+    printf(" |  2. Setup the DHCP server on router to assign          |\n");
+    printf(" |     a static IP for this device's Mac Address          |\n");
+    printf(" |                                                        |\n");
+    printf(" |  3. Device will auto connect to a known SSID:          |\n");
+    printf(" |     testSSID/testPassword as a Wifi Client             |\n");
+    printf(" |  4. Device will also advertise as ESP-BLE-MESH on BT   |\n");
+    printf(" |                                                        |\n");
+    printf(" |  5. Print 'query' to see wifi connection status        |\n");
+    printf(" ==========================================================\n\n");
 
     // start console REPL
     ESP_ERROR_CHECK(esp_console_start_repl(repl));
@@ -815,5 +819,18 @@ void app_main(void)
         return;
     }
 
+    /* Register WIFI subsystem to accept Console CLI */
     wifi_console_init();
+
+
+    /* Auto start STA mode to connect to a known SSID and Password */
+    const char *testSSID = "testSSID";
+    const char *testPassword = "testPassword";
+
+    printf("\nAuto joining Wifi At: %s / %s\n", testSSID, testPassword);
+    if (true == wifi_STAJoin(testSSID, testPassword)) {
+        printf("\n[OK] (will retry if disconnected)\n");
+    } else {
+        printf("\n[FAIL] Make sure router is reachable\n");
+    }
 }

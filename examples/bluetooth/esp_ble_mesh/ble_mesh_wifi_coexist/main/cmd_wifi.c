@@ -177,6 +177,19 @@ static bool wifi_cmd_sta_join(const char *ssid, const char *pass)
     return true;
 }
 
+/**
+ * @brief The public API wrapper to call wifi_cmd_sta_join() programmatically
+ *
+ * @return true if connection is successful false otherwise
+ */
+bool wifi_STAJoin(const char *ssid, const char *pass)
+{
+    assert(NULL != ssid);
+    assert(NULL != pass);
+
+    return wifi_cmd_sta_join(ssid, pass);
+}
+
 static int wifi_cmd_sta(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **) &sta_args);
