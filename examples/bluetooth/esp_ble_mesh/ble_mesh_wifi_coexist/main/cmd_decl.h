@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#include <stdbool.h>
+
 // Register WiFi functions
 void register_wifi(void);
 void initialise_wifi(void);
