@@ -770,12 +770,16 @@ static void wifi_console_init(void)
     printf("\n ========================================================\n");
     printf(" |       Steps to use this test program                   |\n");
     printf(" |                                                        |\n");
-    printf(" |  1. Setup a Wifi Router with testSSID/testPassword     |\n");
+    printf(" |  1. Setup a Wifi Router with                           |\n");
+    printf(" |     ssid: %s \n", CONFIG_MMB_WIFI_STA_AUTO_JOIN_SSID);
+    printf(" |     pswd: %s \n", CONFIG_MMB_WIFI_STA_AUTO_JOIN_PASSWORD);
+    printf(" |                                                        |\n");
     printf(" |  2. Setup the DHCP server on router to assign          |\n");
     printf(" |     a static IP for this device's Mac Address          |\n");
     printf(" |                                                        |\n");
-    printf(" |  3. Device will auto connect to a known SSID:          |\n");
-    printf(" |     testSSID/testPassword as a Wifi Client             |\n");
+    printf(" |  3. Device will auto connect to the specified SSID     |\n");
+    printf(" |     on boot as a Wifi Client                           |\n");
+    printf(" |                                                        |\n");
     printf(" |  4. Device will also advertise as ESP-BLE-MESH on BT   |\n");
     printf(" |                                                        |\n");
     printf(" |  5. Print 'query' to see wifi connection status        |\n");
@@ -824,11 +828,11 @@ void app_main(void)
 
 
     /* Auto start STA mode to connect to a known SSID and Password */
-    const char *testSSID = "testSSID";
-    const char *testPassword = "testPassword";
+    const char *autoSSID = CONFIG_MMB_WIFI_STA_AUTO_JOIN_SSID;
+    const char *autoPassword = CONFIG_MMB_WIFI_STA_AUTO_JOIN_PASSWORD;
 
-    printf("\nAuto joining Wifi At: %s / %s\n", testSSID, testPassword);
-    if (true == wifi_STAJoin(testSSID, testPassword)) {
+    printf("\nAuto joining Wifi At: %s / %s\n", autoSSID, autoPassword);
+    if (true == wifi_STAJoin(autoSSID, autoPassword)) {
         printf("\n[OK] (will retry if disconnected)\n");
     } else {
         printf("\n[FAIL] Make sure router is reachable\n");
