@@ -7,6 +7,15 @@
  */
 #pragma once
 
+#include <stdbool.h>
+
 // Register WiFi functions
 void register_wifi(void);
 void initialise_wifi(void);
+
+/**
+ * @brief The public API wrapper to call wifi_cmd_sta_join() programmatically
+ *
+ * @return true if connection is successful, false otherwise
+ */
+bool wifi_STAJoin(const char *aSSID, const char *aPass);

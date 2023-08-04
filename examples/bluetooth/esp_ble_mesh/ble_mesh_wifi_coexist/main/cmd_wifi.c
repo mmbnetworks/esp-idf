@@ -18,6 +18,7 @@
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
 #include "esp_netif.h"
+#include "esp_netif_ip_addr.h"
 #include "iperf.h"
 
 typedef struct {
@@ -177,6 +178,19 @@ static bool wifi_cmd_sta_join(const char *ssid, const char *pass)
     return true;
 }
 
+/**
+ * @brief The public API wrapper to call wifi_cmd_sta_join() programmatically
+ *
+ * @return true if connection is successful false otherwise
+ */
+bool wifi_STAJoin(const char *ssid, const char *pass)
+{
+    assert(NULL != ssid);
+    assert(NULL != pass);
+
+    return wifi_cmd_sta_join(ssid, pass);
+}
+
 static int wifi_cmd_sta(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **) &sta_args);
@@ -271,6 +285,7 @@ static int wifi_cmd_query(int argc, char **argv)
 {
     wifi_config_t cfg;
     wifi_mode_t mode;
+    uint8_t wifiMac[6] = {0};
 
     esp_wifi_get_mode(&mode);
     if (WIFI_MODE_AP == mode) {
@@ -279,8 +294,26 @@ static int wifi_cmd_query(int argc, char **argv)
     } else if (WIFI_MODE_STA == mode) {
         int bits = xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, 0, 1, 0);
         if (bits & CONNECTED_BIT) {
-            esp_wifi_get_config(WIFI_IF_STA, &cfg);
-            ESP_LOGI(TAG, "sta mode, connected %s", cfg.ap.ssid);
+            // Get config and mac from esp_wifi
+            (void)esp_wifi_get_config(WIFI_IF_STA, &cfg);
+            (void)esp_wifi_get_mac(WIFI_IF_STA, wifiMac);
+            ESP_LOGI(TAG, "sta mode, connected");
+            ESP_LOGI(TAG, "ssid: %s", cfg.sta.ssid);
+            ESP_LOGI(TAG, "mac : %02x:%02x:%02x:%02x:%02x:%02x",
+                        wifiMac[0], wifiMac[1], wifiMac[2],
+                        wifiMac[3], wifiMac[4], wifiMac[5]);
+
+            // Get IP from esp_netif
+            esp_netif_ip_info_t staIpInfo;
+            if (NULL != sta_netif) {
+                if (ESP_OK == esp_netif_get_ip_info(sta_netif, &staIpInfo)) {
+                        ESP_LOGI(TAG, "ip  : " IPSTR, IP2STR(&staIpInfo.ip));
+                } else {
+                    printf("ERR: esp_netif_get_ip_info\n");
+                }
+            } else {
+                printf("ERR: sta_netif still NULL?\n");
+            }
         } else {
             ESP_LOGI(TAG, "sta mode, disconnected");
         }
