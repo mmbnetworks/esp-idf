@@ -38,14 +38,14 @@ menu "Example Configuration"
     config MMB_WIFI_STA_AUTO_JOIN_SSID
         string "Default Wifi SSID to join at boot"
         default "testSSID"
-        depends on ESP32_WIFI_ENABLED
+        depends on ESP_WIFI_ENABLED
         help
             Wifi SSID (network name) for the example to connect to automatically at boot
 
     config MMB_WIFI_STA_AUTO_JOIN_PASSWORD
         string "Default Wifi password to join at boot"
         default "testPassword"
-        depends on ESP32_WIFI_ENABLED
+        depends on ESP_WIFI_ENABLED
         help
             Wifi password for the example to connect to automatically at boot
 
