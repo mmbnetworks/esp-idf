@@ -93,6 +93,11 @@ static bool other_cpu_startup_idle_hook_cb(void)
 
 static void main_task(void* args)
 {
+    UBaseType_t uxHwm;
+    // Check at start of main_task
+    uxHwm = uxTaskGetStackHighWaterMark(NULL);
+    printf("\n**** [0] %s hwm %d (%d left)\n", __func__, uxHwm, (ESP_TASK_MAIN_STACK- uxHwm));
+
 #if !CONFIG_FREERTOS_UNICORE
     // Wait for FreeRTOS initialization to finish on other core, before replacing its startup stack
     esp_register_freertos_idle_hook_for_cpu(other_cpu_startup_idle_hook_cb, !xPortGetCoreID());
@@ -137,8 +142,14 @@ static void main_task(void* args)
         ESP_ERROR_CHECK(esp_task_wdt_add(idle_1));
     }
 #endif
+    // Check before main_task -> app_main transition
+    uxHwm = uxTaskGetStackHighWaterMark(NULL);
+    printf("\n**** [1] %s hwm %d (%d left)\n", __func__, uxHwm, (ESP_TASK_MAIN_STACK- uxHwm));
 
     app_main();
+
+    uxHwm = uxTaskGetStackHighWaterMark(NULL);
+    printf("\n**** [2] %s hwm %d (%d left)\n", __func__, uxHwm, (ESP_TASK_MAIN_STACK- uxHwm));
     vTaskDelete(NULL);
 }
 

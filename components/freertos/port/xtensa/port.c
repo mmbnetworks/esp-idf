@@ -404,6 +404,11 @@ void  __attribute__((weak)) vApplicationStackOverflowHook( TaskHandle_t xTask, c
     for (size_t i = 0 ; i < sizeof(str) / sizeof(str[0]); i++) {
         dest = strcat(dest, str[i]);
     }
+    // Idea: Before we abort maybe we can dump the task watermark like this
+    // UBaseType_t uxHighWaterMark;
+    // uxHighWaterMark = uxTaskGetStackHighWaterMark(xTask);
+    // printf("*** task %s hwm %d\n", pcTaskName, uxHighWaterMark);
+    // Although it is likely pointless at this time, an overflowed task is expected to return 0
     esp_system_abort(buf);
 }
 
