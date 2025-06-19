@@ -22,6 +22,8 @@
 #include "esp_ble_mesh_generic_model_api.h"
 
 #include "ble_mesh_example_init.h"
+#include "esp_timer.h"
+#include "esp_random.h"
 
 #define TAG "EXAMPLE"
 
@@ -116,6 +118,10 @@ static esp_ble_mesh_prov_t provision = {
     .iv_index            = 0x00,
 };
 
+static esp_ble_mesh_node_info_t *toggle_node = NULL;
+static esp_timer_handle_t toggle_timer;
+
+
 static esp_err_t example_ble_mesh_store_node_info(const uint8_t uuid[16], uint16_t unicast,
                                                   uint8_t elem_num, uint8_t onoff_state)
 {
@@ -186,6 +192,61 @@ static esp_err_t example_ble_mesh_set_msg_common(esp_ble_mesh_client_common_para
     common->msg_role = MSG_ROLE;
 
     return ESP_OK;
+}
+
+static void periodic_toggle_callback(void *arg)
+{
+    if (toggle_node == NULL) {
+        ESP_LOGW(TAG, "Toggle node is NULL, skipping toggle");
+        return;
+    }
+
+    esp_ble_mesh_client_common_param_t common = {0};
+    esp_ble_mesh_generic_client_set_state_t set_state = {0};
+    esp_err_t err;
+
+    example_ble_mesh_set_msg_common(&common, toggle_node, onoff_client.model, ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET);
+
+    toggle_node->onoff = !toggle_node->onoff;
+    set_state.onoff_set.op_en = false;
+    set_state.onoff_set.onoff = toggle_node->onoff;
+    set_state.onoff_set.tid = esp_random() & 0xFF;
+
+    ESP_LOGI(TAG, "[TIMER] Toggling LED to: %d", toggle_node->onoff);
+
+    err = esp_ble_mesh_generic_client_set_state(&common, &set_state);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "[TIMER] Failed to send Generic OnOff Set (err %d)", err);
+    }
+}
+
+static void start_periodic_toggle(esp_ble_mesh_node_info_t *node)
+{
+    if (toggle_timer != NULL) {
+        ESP_LOGI(TAG, "Toggle timer already created.");
+        return;
+    }
+
+    toggle_node = node;
+
+    const esp_timer_create_args_t periodic_timer_args = {
+        .callback = &periodic_toggle_callback,
+        .arg = NULL,
+        .name = "onoff_toggle_timer"
+    };
+
+    esp_err_t err = esp_timer_create(&periodic_timer_args, &toggle_timer);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to create toggle timer (err %d)", err);
+        return;
+    }
+
+    err = esp_timer_start_periodic(toggle_timer, 2000000);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to start toggle timer (err %d)", err);
+    } else {
+        ESP_LOGI(TAG, "Periodic toggle timer started.");
+    }
 }
 
 static esp_err_t prov_complete(int node_idx, const esp_ble_mesh_octet16_t uuid,
@@ -538,6 +599,13 @@ static void example_ble_mesh_generic_client_cb(esp_ble_mesh_generic_client_cb_ev
         case ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET:
             node->onoff = param->status_cb.onoff_status.present_onoff;
             ESP_LOGI(TAG, "ESP_BLE_MESH_MODEL_OP_GEN_ONOFF_SET onoff: 0x%02x", node->onoff);
+            static bool toggle_started = false;
+            if (!toggle_started) {
+              toggle_started = true;
+              start_periodic_toggle(node);
+            }
+
+
             break;
         default:
             break;
